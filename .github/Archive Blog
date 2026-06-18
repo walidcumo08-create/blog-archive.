@@ -1,0 +1,33 @@
+name: Archive Blog
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      blog_url:
+        description: 'Blog URL'
+        required: true
+        default: 'https://walidcumo08-ahvpy.wordpress.com/'
+      commit_msg:
+        description: 'Commit message'
+        required: false
+        default: 'Auto-archive update'
+
+jobs:
+  archive-task:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Archive full blog
+        run: wget --no-if-modified-since -m -k -E -p -e robots=off ${{ github.event.inputs.blog_url }} || true
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "${{ github.event.inputs.commit_msg }}" || echo "No changes to commit"
+          git push
